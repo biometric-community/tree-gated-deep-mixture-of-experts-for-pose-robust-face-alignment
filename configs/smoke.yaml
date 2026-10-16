@@ -1,0 +1,38 @@
+device: cuda
+paper:
+  slug: tree-gated-deep-mixture-of-experts-for-pose-robust-face-alignment
+  title: "Tree-gated Deep Mixture-of-Experts for Pose-robust Face Alignment (smoke)"
+data:
+  root: ../../datasets/300w/extracted/300W
+  image_size: 150
+  patch_size: 32
+  val_fraction: 0.2
+  max_train_samples: 16
+  max_val_samples: 8
+  num_workers: 0
+model:
+  name: pose_tree_moe
+  variant: tree_moe
+  n_stages: 2
+  n_landmarks: 68
+train:
+  epochs: 2
+  batch_size: 4
+  lr: 0.001
+  optimizer: adam
+  weight_decay: 0.0
+  seed: 42
+  log_every: 1
+  max_steps: 8
+  pose_loss_weight: 0.1
+eval:
+  metric: nme_interpupil
+paths:
+  checkpoint_dir: outputs/checkpoints
+  log_dir: outputs/logs
+  pred_dir: outputs/predictions
+  figure_dir: outputs/figures
+  checkpoint: outputs/checkpoints/smoke_best.pt
+report:
+  title: "Smoke run"
+  embed_format: svg

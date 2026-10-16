@@ -1,0 +1,11 @@
+outputs/
+!outputs/.gitkeep
+.venv/
+upstream/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.DS_Store
+*.pt
+*.pth

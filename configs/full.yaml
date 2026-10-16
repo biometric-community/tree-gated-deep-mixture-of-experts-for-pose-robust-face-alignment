@@ -1,0 +1,41 @@
+device: cuda
+paper:
+  slug: tree-gated-deep-mixture-of-experts-for-pose-robust-face-alignment
+  title: "Tree-gated Deep Mixture-of-Experts for Pose-robust Face Alignment"
+source_code:
+  url: null
+  commit: null
+data:
+  root: ../../datasets/300w/extracted/300W
+  image_size: 150
+  patch_size: 32
+  val_fraction: 0.2
+  max_train_samples: null
+  max_val_samples: null
+  num_workers: 2
+model:
+  name: pose_tree_moe
+  variant: pose_tree_moe
+  n_stages: 4
+  n_landmarks: 68
+train:
+  epochs: 25
+  batch_size: 8
+  lr: 0.001
+  optimizer: adam
+  weight_decay: 0.0
+  seed: 42
+  log_every: 20
+  pose_loss_weight: 0.05
+
+eval:
+  metric: nme_interpupil
+paths:
+  checkpoint_dir: outputs/checkpoints
+  log_dir: outputs/logs
+  pred_dir: outputs/predictions
+  figure_dir: outputs/figures
+  checkpoint: outputs/checkpoints/best.pt
+report:
+  title: null
+  embed_format: svg
