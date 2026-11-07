@@ -1,0 +1,24 @@
+# Published values from Arnaud, Dapogny & Bailly, "Tree-gated Deep Mixture-of-Experts
+# For Pose-robust Face Alignment", IEEE TBIOM 2(2), 2020, arXiv:1910.09450.
+source: arXiv:1910.09450
+tolerance_pp: 1.0
+
+# Table 1, Pose-Tree-MoE NME (%).
+table_1_pose_tree_moe:
+  lfpw: 3.82
+  helen: 4.17
+  ibug: 7.50
+  cofw: 5.58
+
+# Sec. 3.5 implementation details.
+architecture:
+  stages: 4
+  image_size: 150
+  patch_size: 32
+  landmarks: 68
+  cnn_experts: 8
+  regression_experts: 64
+  tree_depth: 6
+  expert_hidden: 128
+  baseline_hidden: 8192
+  features: 2040
