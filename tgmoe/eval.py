@@ -83,7 +83,7 @@ def main(argv=None):
     if not ckpt_path.is_file():
         raise FileNotFoundError(f"Checkpoint not found: {ckpt_path}")
 
-    train_loader, val_loader, meta = build_dataloaders(cfg, _ROOT)
+    train_loader, val_loader, test_loader, meta = build_dataloaders(cfg, _ROOT)
     mcfg = cfg["model"]
     model = PoseTreeMoE(
         n_stages=int(mcfg.get("n_stages", 4)),
@@ -94,6 +94,7 @@ def main(argv=None):
     ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
     model.load_state_dict(ckpt["model"])
 
+    test_stats = run_eval(model, test_loader, device)
     val_stats = run_eval(model, val_loader, device)
     train_stats = run_eval(model, train_loader, device)
 
@@ -103,6 +104,7 @@ def main(argv=None):
         "data_root": meta["root"],
         "metric": "nme_interpupil_percent",
         "splits": {
+            "test": {k: v for k, v in test_stats.items() if k not in ("per_image_nme", "paths")},
             "val": {k: v for k, v in val_stats.items() if k not in ("per_image_nme", "paths")},
             "train": {k: v for k, v in train_stats.items() if k not in ("per_image_nme", "paths")},
         },
@@ -110,6 +112,7 @@ def main(argv=None):
         "config": args.config,
     }
     # Keep CED in splits
+    results["splits"]["test"]["ced"] = test_stats["ced"]
     results["splits"]["val"]["ced"] = val_stats["ced"]
     results["splits"]["train"]["ced"] = train_stats["ced"]
 
@@ -118,7 +121,7 @@ def main(argv=None):
         json.dump(results, f, indent=2)
         f.write("\n")
     print(
-        f"Wrote {out} val_nme={val_stats['mean_nme']:.3f}% "
+        f"Wrote {out} test_nme={test_stats['mean_nme']:.3f}% val_nme={val_stats['mean_nme']:.3f}% "
         f"train_nme={train_stats['mean_nme']:.3f}% n_val={val_stats['n_images']}"
     )
 

@@ -118,7 +118,7 @@ def write_report(
         lines += [
             f"- Variant: `{summary.get('variant')}`",
             f"- Parameters: {summary.get('n_params_m', float('nan')):.2f}M",
-            f"- Train / val images: {summary.get('n_train')} / {summary.get('n_val')}",
+            f"- Train / val / test images: {summary.get('n_train')} / {summary.get('n_val')} / {summary.get('n_test')}",
             f"- Data root: `{summary.get('data_root')}`",
             f"- Epochs / steps: {summary.get('epochs_ran')} / {summary.get('steps')}",
             f"- Device: `{summary.get('device')}`",

@@ -193,6 +193,18 @@ def compute_mean_shape(samples: List[Tuple[Path, Path]], image_size: int = 150) 
     return (acc / max(len(ds), 1)).astype(np.float32)
 
 
+def split_samples(pairs: List, seed: int, val_fraction: float, test_fraction: float):
+    """Disjoint train / val / test: val selects the checkpoint, test is only reported."""
+    idx = np.arange(len(pairs))
+    np.random.RandomState(seed).shuffle(idx)
+    n_val = max(1, int(len(pairs) * val_fraction))
+    n_test = max(1, int(len(pairs) * test_fraction))
+    val = [pairs[i] for i in idx[:n_val]]
+    test = [pairs[i] for i in idx[n_val : n_val + n_test]]
+    train = [pairs[i] for i in idx[n_val + n_test :]]
+    return train, val, test
+
+
 def build_dataloaders(cfg: dict, project_root: Path):
     data_cfg = cfg["data"]
     root = Path(data_cfg["root"])
@@ -206,13 +218,12 @@ def build_dataloaders(cfg: dict, project_root: Path):
     if not pairs:
         raise FileNotFoundError(f"No image/.pts pairs under {root}")
 
-    rng = np.random.RandomState(int(cfg.get("train", {}).get("seed", 42)))
-    idx = np.arange(len(pairs))
-    rng.shuffle(idx)
-    n_val = max(1, int(len(pairs) * float(data_cfg.get("val_fraction", 0.2))))
-    val_idx = set(idx[:n_val].tolist())
-    train_pairs = [pairs[i] for i in idx if i not in val_idx]
-    val_pairs = [pairs[i] for i in idx if i in val_idx]
+    train_pairs, val_pairs, test_pairs = split_samples(
+        pairs,
+        int(cfg.get("train", {}).get("seed", 42)),
+        float(data_cfg.get("val_fraction", 0.1)),
+        float(data_cfg.get("test_fraction", 0.2)),
+    )
 
     max_train = data_cfg.get("max_train_samples")
     max_val = data_cfg.get("max_val_samples")
@@ -220,6 +231,7 @@ def build_dataloaders(cfg: dict, project_root: Path):
         train_pairs = train_pairs[: int(max_train)]
     if max_val is not None:
         val_pairs = val_pairs[: int(max_val)]
+        test_pairs = test_pairs[: int(max_val)]
 
     image_size = int(data_cfg.get("image_size", 150))
     mean_shape = compute_mean_shape(train_pairs, image_size=image_size)
@@ -239,6 +251,14 @@ def build_dataloaders(cfg: dict, project_root: Path):
         seed=0,
     )
 
+    test_ds = Face300WDataset(
+        test_pairs,
+        image_size=image_size,
+        augment=False,
+        mean_shape=mean_shape,
+        seed=0,
+    )
+
     bs = int(cfg.get("train", {}).get("batch_size", 8))
     nw = int(cfg.get("train", {}).get("num_workers", 2))
     train_loader = DataLoader(
@@ -247,11 +267,15 @@ def build_dataloaders(cfg: dict, project_root: Path):
     val_loader = DataLoader(
         val_ds, batch_size=bs, shuffle=False, num_workers=nw, drop_last=False
     )
+    test_loader = DataLoader(
+        test_ds, batch_size=bs, shuffle=False, num_workers=nw, drop_last=False
+    )
     meta = {
         "n_train": len(train_ds),
         "n_val": len(val_ds),
+        "n_test": len(test_ds),
         "n_total": len(pairs),
         "root": str(root),
         "mean_shape": mean_shape,
     }
-    return train_loader, val_loader, meta
+    return train_loader, val_loader, test_loader, meta

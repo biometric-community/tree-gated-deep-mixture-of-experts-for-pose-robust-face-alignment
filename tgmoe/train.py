@@ -64,7 +64,7 @@ def main(argv=None):
     ckpt_dir.mkdir(parents=True, exist_ok=True)
     log_dir.mkdir(parents=True, exist_ok=True)
 
-    train_loader, val_loader, meta = build_dataloaders(cfg, _ROOT)
+    train_loader, val_loader, _, meta = build_dataloaders(cfg, _ROOT)
 
     mcfg = cfg["model"]
     model = PoseTreeMoE(
@@ -183,6 +183,7 @@ def main(argv=None):
         "n_params_m": n_params,
         "n_train": meta["n_train"],
         "n_val": meta["n_val"],
+        "n_test": meta["n_test"],
         "data_root": meta["root"],
         "best_val_nme_percent": best_nme,
         "epochs_ran": history["epochs"][-1] + 1 if history["epochs"] else 0,

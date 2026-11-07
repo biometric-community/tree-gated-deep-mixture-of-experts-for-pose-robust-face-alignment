@@ -7,7 +7,7 @@ import pytest
 import torch
 import torch.nn.functional as F
 
-from tgmoe.data.dataset_300w import _mirror_68
+from tgmoe.data.dataset_300w import _mirror_68, split_samples
 from tgmoe.metrics import nme_bbox, nme_interpupil
 from tgmoe.models.cascade import CascadeStage, PoseTreeMoE, extract_patches
 from tgmoe.models.gates import SoftmaxGate, TreeGate
@@ -108,6 +108,12 @@ def test_nme_matches_eq_12():
 def test_bbox_nme_matches_eq_13():
     pred = torch.tensor([[3.0, 4.0]])
     assert nme_bbox(pred, torch.zeros(1, 2), torch.tensor([20.0])).item() == pytest.approx(0.25)
+
+
+def test_train_val_and_test_splits_are_disjoint():
+    train, val, test = split_samples(list(range(100)), 42, 0.1, 0.2)
+    assert (len(train), len(val), len(test)) == (70, 10, 20)
+    assert len(set(train) | set(val) | set(test)) == 100
 
 
 def test_mirroring_is_its_own_inverse_and_fixes_the_nose_bridge():
